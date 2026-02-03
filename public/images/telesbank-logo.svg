@@ -1,0 +1,22 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" role="img" aria-labelledby="titleDesc">
+  <title id="titleDesc">TelesBank</title>
+
+  <!-- background -->
+  <rect x="0" y="0" width="40" height="40" rx="10" fill="#0b6b4f"></rect>
+
+  <!-- bank icon -->
+  <g transform="translate(6,6)" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- roof -->
+    <path d="M2 10 L14 2 L26 10"></path>
+
+    <!-- columns -->
+    <path d="M6 12 V26"></path>
+    <path d="M14 12 V26"></path>
+    <path d="M22 12 V26"></path>
+
+    <!-- base -->
+    <path d="M2 28 H26"></path>
+  </g>
+</svg>
