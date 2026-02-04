@@ -23,7 +23,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Cor primaria</label>
-                        <input type="text" name="primary_color" class="form-control" value="{{ old('primary_color', $values['primary_color'] ?? '') }}" required>
+                        <input type="color" name="primary_color" class="form-control" value="{{ old('primary_color', $values['primary_color'] ?? '') }}" required>
                     </div>
                 </div>
 
