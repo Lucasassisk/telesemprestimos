@@ -20,9 +20,10 @@ use App\Http\Controllers\NotificationController;
 | ROTA INICIAL
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::middleware('guest')->get('/', function () {
+    return redirect()->route('login');
+});
+
 /*
 | Rota pública inicial agora aponta para a view `welcome`.
 */
