@@ -6,6 +6,7 @@ use App\Models\Configuracao;
 use App\Models\Solicitacao;
 use App\Models\Cliente;
 use App\Models\Emprestimo;
+use App\Services\PromissoriaService;
 use App\Services\SystemNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -78,6 +79,35 @@ class PublicSolicitacaoController extends Controller
             route('admin.solicitacoes.index')
         );
 
+        try {
+            $promissoriaPath = PromissoriaService::gerar(
+                [
+                    'nome' => $solicitacao->nome,
+                    'cpf' => $solicitacao->cpf,
+                    'endereco' => $solicitacao->endereco,
+                    'credor_nome' => config('app.name'),
+                    'credor_documento' => null,
+                    'valor' => null,
+                    'valor_extenso' => null,
+                    'parcelas' => null,
+                    'valor_parcela' => null,
+                    'primeiro_vencimento' => null,
+                    'multa_percent' => null,
+                    'juros_percent' => null,
+                    'local_data' => null,
+                ],
+                'solicitacoes/promissorias',
+                'promissoria-solicitacao-' . $solicitacao->id
+            );
+
+            $solicitacao->update(['promissoria_path' => $promissoriaPath]);
+        } catch (\Throwable $e) {
+            \Log::error('Falha ao gerar promissoria', [
+                'solicitacao_id' => $solicitacao->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // encontra ou cria cliente a partir do documento/email
         $clienteAttributes = [
             'nome' => $data['nome'],
@@ -115,6 +145,11 @@ class PublicSolicitacaoController extends Controller
             'status' => \App\Models\Emprestimo::STATUS_PENDENTE,
             'solicitacao_id' => $solicitacao->id, // ADICIONADO
         ]);
+
+        if (! empty($promissoriaPath ?? null) && empty($cliente->promissoria_path)) {
+            $cliente->promissoria_path = $promissoriaPath;
+            $cliente->save();
+        }
 
         // redireciona para a página de obrigado
         return redirect()->route('solicitacoes.thankyou');

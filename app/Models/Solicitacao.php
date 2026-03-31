@@ -30,6 +30,7 @@ class Solicitacao extends Model
         'contracheque_path',
         'identidade_path',
         'comprovante_endereco_path',
+        'promissoria_path',
         'status',
     ];
 

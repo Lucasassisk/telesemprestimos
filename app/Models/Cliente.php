@@ -18,6 +18,7 @@ class Cliente extends Model
         'email',
         'telefone',
         'endereco',
+        'promissoria_path',
         'renda_mensal',
         'disponivel',
         'ativo',

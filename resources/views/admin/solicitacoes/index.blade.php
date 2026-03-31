@@ -62,6 +62,9 @@
                                 @if($s->comprovante_endereco_path)
                                     <a href="{{ route('admin.solicitacoes.download', [$s, 'comprovante_endereco']) }}" class="btn btn-sm btn-outline-info">Comprovante</a>
                                 @endif
+                                @if($s->promissoria_path)
+                                    <a href="{{ route('admin.solicitacoes.download', [$s, 'promissoria']) }}" class="btn btn-sm btn-outline-dark">Promissoria</a>
+                                @endif
                             </td>
                         </tr>
                     @empty

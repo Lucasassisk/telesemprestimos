@@ -34,6 +34,7 @@ class SolicitacaoController extends Controller
             'contracheque' => 'contracheque_path',
             'identidade' => 'identidade_path',
             'comprovante_endereco' => 'comprovante_endereco_path',
+            'promissoria' => 'promissoria_path',
         ];
 
         if (! isset($map[$file])) {

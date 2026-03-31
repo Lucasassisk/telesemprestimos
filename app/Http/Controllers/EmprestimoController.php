@@ -96,13 +96,10 @@ class EmprestimoController extends Controller
             $n = (int) $data['parcelas'];
             $valorFinanciado = (float) $data['valor_bruto'];
 
-            // interpretar juros_percent como taxa anual nominal (ex: 40 = 40% a.a.)
-            // converter para taxa efetiva mensal
-            $annualRate = ($data['juros_percent'] ?? 0) / 100;
-            if ($annualRate <= 0) {
+            // interpretar juros_percent como taxa mensal (ex: 20 = 20% a.m.)
+            $j = ($data['juros_percent'] ?? 0) / 100;
+            if ($j <= 0) {
                 $j = 0.0;
-            } else {
-                $j = pow(1 + $annualRate, 1 / 12) - 1; // taxa mensal efetiva
             }
 
             if ($j == 0) {
@@ -253,11 +250,10 @@ class EmprestimoController extends Controller
                 $n = (int) $data['parcelas'];
                 $valorFinanciado = (float) $data['valor_bruto'];
 
-                $annualRate = ($data['juros_percent'] ?? 0) / 100;
-                if ($annualRate <= 0) {
+                // interpretar juros_percent como taxa mensal (ex: 20 = 20% a.m.)
+                $j = ($data['juros_percent'] ?? 0) / 100;
+                if ($j <= 0) {
                     $j = 0.0;
-                } else {
-                    $j = pow(1 + $annualRate, 1 / 12) - 1; // taxa mensal efetiva
                 }
 
                 if ($j == 0) {

@@ -7,6 +7,9 @@
         <h1>{{ $cliente->nome }}</h1>
         <div>
             <a href="{{ route('clientes.edit', $cliente) }}" class="btn btn-primary btn-sm">Editar</a>
+            @if($cliente->promissoria_path)
+                <a href="{{ Storage::disk('public')->url($cliente->promissoria_path) }}" target="_blank" class="btn btn-outline-dark btn-sm">Promissoria</a>
+            @endif
             <a href="{{ route('clientes.index') }}" class="btn btn-default btn-sm">Voltar</a>
         </div>
     </div>
