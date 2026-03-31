@@ -62,7 +62,8 @@ class EmprestimoController extends Controller
                 'valor' => $prestacao,
                 'principal' => $principalPart,
                 'juros' => $jurosPart,
-                'vencimento' => $start->copy()->addMonths($i - 1)->toDateString(),
+                // Evita overflow de calendário: 31/03 + 1 mês = 30/04 (não 01/05).
+                'vencimento' => $start->copy()->addMonthsNoOverflow($i - 1)->toDateString(),
                 'status' => 'aberta',
             ]);
 
