@@ -19,6 +19,57 @@ class EmprestimoController extends Controller
             ->exists();
     }
 
+    private function gerarParcelasPrice(Emprestimo $emprestimo, array $data): void
+    {
+        $n = (int) $data['parcelas'];
+        $valorFinanciado = (float) $data['valor_bruto'];
+
+        // interpreta juros_percent como taxa mensal (ex: 20 = 20% a.m.)
+        $j = ($data['juros_percent'] ?? 0) / 100;
+        if ($j <= 0) {
+            $j = 0.0;
+        }
+
+        if ($j == 0) {
+            $prestacao = round($valorFinanciado / $n, 2);
+        } else {
+            $prestacao = $valorFinanciado * ($j / (1 - pow(1 + $j, -$n)));
+            $prestacao = round($prestacao, 2);
+        }
+
+        if (!empty($data['data_disponivel'])) {
+            $start = \Carbon\Carbon::parse($data['data_disponivel']);
+        } elseif (!empty($data['data_contratacao'])) {
+            $start = \Carbon\Carbon::parse($data['data_contratacao']);
+        } else {
+            $start = \Carbon\Carbon::now();
+        }
+
+        $saldo = $valorFinanciado;
+        for ($i = 1; $i <= $n; $i++) {
+            $jurosPart = round($saldo * $j, 2);
+            $principalPart = round($prestacao - $jurosPart, 2);
+
+            // ajusta a última parcela para corrigir arredondamentos
+            if ($i === $n) {
+                $principalPart = round($saldo, 2);
+                $prestacao = round($principalPart + $jurosPart, 2);
+            }
+
+            Parcela::create([
+                'emprestimo_id' => $emprestimo->id,
+                'numero' => $i,
+                'valor' => $prestacao,
+                'principal' => $principalPart,
+                'juros' => $jurosPart,
+                'vencimento' => $start->copy()->addMonths($i - 1)->toDateString(),
+                'status' => 'aberta',
+            ]);
+
+            $saldo = round($saldo - $principalPart, 2);
+        }
+    }
+
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -75,80 +126,84 @@ class EmprestimoController extends Controller
         // valor_liquido e o que sera desembolsado ao cliente (neste projeto assumimos sem taxas)
         $data['valor_liquido'] = $data['valor_bruto'];
 
-        DB::transaction(function () use ($data) {
-            $emprestimo = Emprestimo::create([
-                'cliente_id' => $data['cliente_id'],
-                'valor_bruto' => $data['valor_bruto'],
-                'valor_liquido' => $data['valor_liquido'],
-                'juros_percent' => $data['juros_percent'],
-                'parcelas' => $data['parcelas'],
-                'data_disponivel' => $data['data_disponivel'] ?? null,
-                'data_contratacao' => $data['data_contratacao'] ?? null,
-                'status' => $data['status'] ?? Emprestimo::STATUS_PENDENTE,
-            ]);
+        $emprestimoFinal = null;
+        $reutilizouPendenteSolicitacao = false;
 
-            // atualizar saldo disponivel do cliente (adiciona o valor liquido)
-            $cliente = Cliente::find($data['cliente_id']);
-            $cliente->disponivel = ($cliente->disponivel ?? 0) + $data['valor_liquido'];
-            $cliente->save();
+        DB::transaction(function () use ($data, &$emprestimoFinal, &$reutilizouPendenteSolicitacao) {
+            // Regra: se existir emprestimo pendente originado de solicitacao para o cliente,
+            // reutiliza esse registro em vez de criar um novo.
+            $emprestimoPendenteSolicitacao = Emprestimo::where('cliente_id', $data['cliente_id'])
+                ->where('status', Emprestimo::STATUS_PENDENTE)
+                ->whereNotNull('solicitacao_id')
+                ->orderByDesc('created_at')
+                ->lockForUpdate()
+                ->first();
 
-            // Gerar parcelas pelo metodo Price (prestacao fixa com capitalizacao mensal)
-            $n = (int) $data['parcelas'];
-            $valorFinanciado = (float) $data['valor_bruto'];
+            if ($emprestimoPendenteSolicitacao) {
+                $reutilizouPendenteSolicitacao = true;
+                $valorLiquidoAnterior = (float) ($emprestimoPendenteSolicitacao->valor_liquido ?? 0);
 
-            // interpretar juros_percent como taxa mensal (ex: 20 = 20% a.m.)
-            $j = ($data['juros_percent'] ?? 0) / 100;
-            if ($j <= 0) {
-                $j = 0.0;
-            }
-
-            if ($j == 0) {
-                $prestacao = round($valorFinanciado / $n, 2);
-            } else {
-                $prestacao = $valorFinanciado * ($j / (1 - pow(1 + $j, -$n)));
-                $prestacao = round($prestacao, 2);
-            }
-
-            if (!empty($data['data_disponivel'])) {
-                $start = \Carbon\Carbon::parse($data['data_disponivel']);
-            } elseif (!empty($data['data_contratacao'])) {
-                $start = \Carbon\Carbon::parse($data['data_contratacao']);
-            } else {
-                $start = \Carbon\Carbon::now();
-            }
-
-            $saldo = $valorFinanciado;
-            for ($i = 1; $i <= $n; $i++) {
-                $jurosPart = round($saldo * $j, 2);
-                $principalPart = round($prestacao - $jurosPart, 2);
-
-                // Ajuste na ultima parcela para corrigir arredondamentos
-                if ($i === $n) {
-                    $principalPart = round($saldo, 2);
-                    $prestacao = round($principalPart + $jurosPart, 2);
-                }
-
-                Parcela::create([
-                    'emprestimo_id' => $emprestimo->id,
-                    'numero' => $i,
-                    'valor' => $prestacao,
-                    'principal' => $principalPart,
-                    'juros' => $jurosPart,
-                    'vencimento' => $start->copy()->addMonths($i - 1)->toDateString(),
-                    'status' => 'aberta',
+                $emprestimoPendenteSolicitacao->update([
+                    'cliente_id' => $data['cliente_id'],
+                    'valor_bruto' => $data['valor_bruto'],
+                    'valor_liquido' => $data['valor_liquido'],
+                    'juros_percent' => $data['juros_percent'],
+                    'parcelas' => $data['parcelas'],
+                    'data_disponivel' => $data['data_disponivel'] ?? null,
+                    'data_contratacao' => $data['data_contratacao'] ?? null,
+                    'status' => $data['status'] ?? Emprestimo::STATUS_PENDENTE,
                 ]);
 
-                $saldo = round($saldo - $principalPart, 2);
+                // Recalcula parcelas do registro reutilizado.
+                $emprestimoPendenteSolicitacao->parcelas()->delete();
+                $this->gerarParcelasPrice($emprestimoPendenteSolicitacao, $data);
+
+                // Ajusta saldo disponivel somando somente a diferenca.
+                $cliente = Cliente::find($data['cliente_id']);
+                if ($cliente) {
+                    $delta = (float) $data['valor_liquido'] - $valorLiquidoAnterior;
+                    $cliente->disponivel = ($cliente->disponivel ?? 0) + $delta;
+                    $cliente->save();
+                }
+
+                $emprestimoFinal = $emprestimoPendenteSolicitacao;
+            } else {
+                $emprestimo = Emprestimo::create([
+                    'cliente_id' => $data['cliente_id'],
+                    'valor_bruto' => $data['valor_bruto'],
+                    'valor_liquido' => $data['valor_liquido'],
+                    'juros_percent' => $data['juros_percent'],
+                    'parcelas' => $data['parcelas'],
+                    'data_disponivel' => $data['data_disponivel'] ?? null,
+                    'data_contratacao' => $data['data_contratacao'] ?? null,
+                    'status' => $data['status'] ?? Emprestimo::STATUS_PENDENTE,
+                ]);
+
+                $cliente = Cliente::find($data['cliente_id']);
+                if ($cliente) {
+                    $cliente->disponivel = ($cliente->disponivel ?? 0) + $data['valor_liquido'];
+                    $cliente->save();
+                }
+
+                $this->gerarParcelasPrice($emprestimo, $data);
+                $emprestimoFinal = $emprestimo;
             }
 
-            SystemNotificationService::createOnce(
-                'emprestimo_' . $emprestimo->id,
-                'Novo emprestimo #' . $emprestimo->id,
-                $cliente?->nome ?? null,
-                'primary',
-                route('emprestimos.show', $emprestimo)
-            );
+            if ($emprestimoFinal && $cliente) {
+                SystemNotificationService::createOnce(
+                    'emprestimo_' . $emprestimoFinal->id,
+                    'Novo emprestimo #' . $emprestimoFinal->id,
+                    $cliente->nome ?? null,
+                    'primary',
+                    route('emprestimos.show', $emprestimoFinal)
+                );
+            }
         });
+
+        if ($reutilizouPendenteSolicitacao) {
+            return redirect()->route('emprestimos.show', $emprestimoFinal)
+                ->with('success', 'Emprestimo pendente da solicitacao atualizado com os dados finais.');
+        }
 
         return redirect()->route('emprestimos.index')->with('success', 'Emprestimo criado.');
     }
@@ -242,57 +297,10 @@ class EmprestimoController extends Controller
                 }
             }
 
-            // se numero de parcelas, juros ou valor_bruto mudou, recriar parcelas pelo metodo Price
+            // se numero de parcelas, juros ou valor_bruto mudou, recriar parcelas
             if ($oldParcelas != $data['parcelas'] || $oldJurosPercent != $data['juros_percent'] || $oldValorBruto != $data['valor_bruto']) {
-                // remover parcelas antigas
                 $emprestimo->parcelas()->delete();
-
-                $n = (int) $data['parcelas'];
-                $valorFinanciado = (float) $data['valor_bruto'];
-
-                // interpretar juros_percent como taxa mensal (ex: 20 = 20% a.m.)
-                $j = ($data['juros_percent'] ?? 0) / 100;
-                if ($j <= 0) {
-                    $j = 0.0;
-                }
-
-                if ($j == 0) {
-                    $prestacao = round($valorFinanciado / $n, 2);
-                } else {
-                    $prestacao = $valorFinanciado * ($j / (1 - pow(1 + $j, -$n)));
-                    $prestacao = round($prestacao, 2);
-                }
-
-                if (!empty($data['data_disponivel'])) {
-                    $start = \Carbon\Carbon::parse($data['data_disponivel']);
-                } elseif (!empty($data['data_contratacao'])) {
-                    $start = \Carbon\Carbon::parse($data['data_contratacao']);
-                } else {
-                    $start = \Carbon\Carbon::now();
-                }
-
-                $saldo = $valorFinanciado;
-                for ($i = 1; $i <= $n; $i++) {
-                    $jurosPart = round($saldo * $j, 2);
-                    $principalPart = round($prestacao - $jurosPart, 2);
-
-                    if ($i === $n) {
-                        $principalPart = round($saldo, 2);
-                        $prestacao = round($principalPart + $jurosPart, 2);
-                    }
-
-                    Parcela::create([
-                        'emprestimo_id' => $emprestimo->id,
-                        'numero' => $i,
-                        'valor' => $prestacao,
-                        'principal' => $principalPart,
-                        'juros' => $jurosPart,
-                        'vencimento' => $start->copy()->addMonths($i - 1)->toDateString(),
-                        'status' => 'aberta',
-                    ]);
-
-                    $saldo = round($saldo - $principalPart, 2);
-                }
+                $this->gerarParcelasPrice($emprestimo, $data);
             }
         });
 

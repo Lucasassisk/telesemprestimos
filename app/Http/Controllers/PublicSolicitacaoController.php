@@ -103,18 +103,20 @@ class PublicSolicitacaoController extends Controller
             $cliente = Cliente::create($clienteAttributes);
         }
 
-        // cria um empréstimo "pendente" que aparecerá em /emprestimos (admin pode aprovar/editar)
-        Emprestimo::create([
-            'cliente_id' => $cliente->id,
-            'valor_bruto' => 0.00,
-            'valor_liquido' => 0.00,
-            'juros_percent' => 0,
-            'parcelas' => 1,
-            'data_disponivel' => null,
-            'data_contratacao' => null,
-            'status' => \App\Models\Emprestimo::STATUS_PENDENTE,
-            'solicitacao_id' => $solicitacao->id, // ADICIONADO
-        ]);
+        // Garante no máximo um empréstimo vinculado para cada solicitação.
+        Emprestimo::firstOrCreate(
+            ['solicitacao_id' => $solicitacao->id],
+            [
+                'cliente_id' => $cliente->id,
+                'valor_bruto' => 0.00,
+                'valor_liquido' => 0.00,
+                'juros_percent' => 0,
+                'parcelas' => 1,
+                'data_disponivel' => null,
+                'data_contratacao' => null,
+                'status' => \App\Models\Emprestimo::STATUS_PENDENTE,
+            ]
+        );
 
         // redireciona para a página de obrigado
         return redirect()->route('solicitacoes.thankyou');
