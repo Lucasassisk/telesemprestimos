@@ -11,6 +11,7 @@ use App\Models\Configuracao;
 use App\Observers\AuditableObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Vite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Em produção, ignora qualquer "public/hot" residual para não apontar para Vite dev server.
+        if (app()->environment('production')) {
+            Vite::useHotFile(storage_path('framework/vite.hot.disabled'));
+        }
+
         Cliente::observe(AuditableObserver::class);
         Emprestimo::observe(AuditableObserver::class);
         Parcela::observe(AuditableObserver::class);
@@ -40,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
                 config(['app.name' => $values['app_name']]);
             }
 
-            config(['adminlte.logo' => 'Teles Emprestimos']);
+            config(['adminlte.logo' => 'Teles Empréstimos']);
 
             if (!empty($values['primary_color'])) {
                 config(['app.primary_color' => $values['primary_color']]);

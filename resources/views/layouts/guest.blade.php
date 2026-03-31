@@ -11,6 +11,14 @@
     <title>{{ config('app.name') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+    </style>
 </head>
 
 <body class="{{ $isLoginRoute ? 'min-h-screen' : 'min-h-screen flex items-center justify-center' }}"
