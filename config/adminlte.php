@@ -62,13 +62,12 @@ return [
     |
     */
 
-    'logo' => 'Teles Emprestimos',
-    // 'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-    'logo_img' => null,
-    'logo_img_class' => 'brand-text font-weight-light',
+    'logo' => 'Teles Empréstimos',
+    'logo_img' => 'images/telesbank-logo.svg',
+    'logo_img_class' => 'brand-image img-circle elevation-2',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'TelesBank',
+    'logo_img_alt' => 'Teles Empréstimos',
 
     /*
     |--------------------------------------------------------------------------
@@ -191,8 +190,8 @@ return [
     */
 
     'classes_body' => '',
-    'classes_brand' => '',
-    'classes_brand_text' => '',
+    'classes_brand' => 'teles-brand-link',
+    'classes_brand_text' => 'teles-brand-text',
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
     'classes_content' => '',

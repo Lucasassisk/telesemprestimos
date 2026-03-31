@@ -15,8 +15,13 @@
         class="brand-link {{ config('adminlte.classes_brand') }}"
     @endif>
 
+    <img src="{{ asset(config('adminlte.logo_img', 'images/telesbank-logo.svg')) }}"
+         alt="{{ config('adminlte.logo_img_alt', 'Teles Empréstimos') }}"
+         class="{{ config('adminlte.logo_img_class', 'brand-image img-circle elevation-2') }}"
+         style="opacity:.95">
+
     <span class="brand-text font-weight-light {{ config('adminlte.classes_brand_text') }}">
-        {!! config('adminlte.logo', 'Teles Emprestimos') !!}
+        {!! config('adminlte.logo', 'Teles Empréstimos') !!}
     </span>
 
 </a>

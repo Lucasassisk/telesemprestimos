@@ -88,6 +88,44 @@
         .card { border-radius: 8px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
         .card-header { border-top-left-radius: 8px; border-top-right-radius: 8px; }
         .form-control { border-radius: 6px; }
+        .main-sidebar .brand-link.teles-brand-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 56px;
+            padding: 0.65rem 0.9rem;
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .main-sidebar .brand-link.teles-brand-link .brand-image {
+            float: none;
+            margin: 0;
+            width: 30px;
+            height: 30px;
+            max-height: 30px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .main-sidebar .brand-link.teles-brand-link .brand-text.teles-brand-text {
+            margin: 0;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 1.06rem;
+            font-weight: 600 !important;
+            letter-spacing: 0.01em;
+            color: #f8fafc;
+            line-height: 1.2;
+        }
+        .sidebar-mini.sidebar-collapse .main-sidebar .brand-link.teles-brand-link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .sidebar-mini.sidebar-collapse .main-sidebar .brand-link.teles-brand-link .brand-text.teles-brand-text {
+            display: none;
+        }
     </style>
 
     {{-- Favicon --}}
