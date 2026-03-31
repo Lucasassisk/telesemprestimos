@@ -40,13 +40,7 @@ class AppServiceProvider extends ServiceProvider
                 config(['app.name' => $values['app_name']]);
             }
 
-            if (!empty($values['logo_path'])) {
-                config(['adminlte.logo_img' => 'storage/' . $values['logo_path']]);
-            }
-
-            if (!empty($values['app_name'])) {
-                config(['adminlte.logo' => $values['app_name']]);
-            }
+            config(['adminlte.logo' => 'Teles Emprestimos']);
 
             if (!empty($values['primary_color'])) {
                 config(['app.primary_color' => $values['primary_color']]);

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Services\PromissoriaService;
 use Illuminate\Http\Request;
 
 class ClienteController extends Controller
@@ -53,35 +52,6 @@ class ClienteController extends Controller
         }
 
         $cliente = Cliente::create($data);
-
-        try {
-            $promissoriaPath = PromissoriaService::gerar(
-                [
-                    'nome' => $cliente->nome,
-                    'cpf' => $cliente->documento,
-                    'endereco' => $cliente->endereco,
-                    'credor_nome' => config('app.name'),
-                    'credor_documento' => null,
-                    'valor' => null,
-                    'valor_extenso' => null,
-                    'parcelas' => null,
-                    'valor_parcela' => null,
-                    'primeiro_vencimento' => null,
-                    'multa_percent' => null,
-                    'juros_percent' => null,
-                    'local_data' => null,
-                ],
-                'clientes/promissorias',
-                'promissoria-cliente-' . $cliente->id
-            );
-
-            $cliente->update(['promissoria_path' => $promissoriaPath]);
-        } catch (\Throwable $e) {
-            \Log::error('Falha ao gerar promissoria (cliente)', [
-                'cliente_id' => $cliente->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
 
         return redirect()->route('clientes.index')->with('success', 'Cliente criado.');
     }

@@ -62,9 +62,9 @@ return [
     |
     */
 
-    'logo' => 'TelesBank',
+    'logo' => 'Teles Emprestimos',
     // 'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-    'logo_img' => 'images/telesbank-logo.svg',
+    'logo_img' => null,
     'logo_img_class' => 'brand-text font-weight-light',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
