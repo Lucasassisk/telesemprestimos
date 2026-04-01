@@ -10,8 +10,8 @@
             background: radial-gradient(circle at 20% 10%, rgba(6, 182, 212, 0.18), transparent 30%),
                 radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.2), transparent 35%),
                 #020617;
-            width: min(1240px, 100%);
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             padding: clamp(20px, 3vw, 34px);
             box-sizing: border-box;
         }

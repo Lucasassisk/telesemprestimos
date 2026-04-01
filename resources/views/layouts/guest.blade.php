@@ -16,13 +16,18 @@
             margin: 0;
             padding: 0;
             width: 100%;
+            min-height: 100%;
             overflow-x: hidden;
+        }
+
+        body {
+            min-height: 100vh;
         }
     </style>
 </head>
 
 <body class="{{ $isLoginRoute ? 'min-h-screen' : 'min-h-screen flex items-center justify-center' }}"
-      style="background-color: {{ $primaryColor }};">
+      style="background-color: {{ $isLoginRoute ? '#020617' : $primaryColor }};">
     @if ($isLoginRoute)
         {{ $slot }}
     @else
